@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Pairwise North American Owl Quiz</title>
+    <title>North American Owl Ranker</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -11,14 +11,10 @@
       <h1>FUCK IT, LET'S RANK THE OWLS</h1>
 
       <section id="controls">
+
+        <p>Click your winner or press <strong>1</strong> or <strong>2</strong>.</p>
         <div id="progress">Progress: 0 / 0</div>
         <div id="skipMsg" class="muted"></div>
-        <div style="margin-top:10px;display:flex;gap:8px;">
-          <button id="testBtn">Test (generate random results)</button>
-          <button id="computeStats">Compute Stats</button>
-          <button id="resetProgress">Reset Progress</button>
-        </div>
-        <div id="statMsg" class="muted"></div>
       </section>
 
       <section id="pair" aria-live="polite">
@@ -26,14 +22,25 @@
         <button id="btn2" class="owl-btn">(2)</button>
       </section>
 
+      <section>
+
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button id="computeStatsRanking">Compute rankings (win sum)</button>
+          <button id="computeStatsBT">Compute rankings (BT score)</button>
+          <button id="resetProgress">Reset progress</button>
+          <!-- <button id="testBtn">Test (generate random results)</button> -->
+        </div>
+
+        <div id="statMsg" class="muted"></div>
+      </section>
+
       <section id="done" hidden>
-        <h2>Your Owl Rank</h2>
+        <h2 id="rankingHeader">Rankings</h2>
         <ol id="ranking"></ol>
-        <button id="restart">Restart Quiz</button>
+        <!-- <button id="restart">Restart Quiz</button> -->
       </section>
 
       <footer>
-        <p>Choose with mouse or press <strong>1</strong> / <strong>2</strong>.</p>
       </footer>
     </main>
     <script src="script.js"></script>

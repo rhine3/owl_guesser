@@ -12,9 +12,9 @@ h1{margin-top:0;font-size:20px}
 .owl-btn{flex:1;padding:18px;font-size:16px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer}
 .owl-btn:active{transform:translateY(1px)}
 #progress{font-size:14px;color:var(--muted)}
-.muted{color:var(--muted);margin-top:6px}
+.muted{color:var(--muted);margin-top:12px;margin-bottom:6px}
 #done{margin-top:12px}
-button#restart{margin-top:12px;padding:8px 12px;border-radius:6px;background:var(--accent);color:#fff;border:none;cursor:pointer}
+/*button#restart{margin-top:12px;padding:8px 12px;border-radius:6px;background:var(--accent);color:#fff;border:none;cursor:pointer}*/
 footer{margin-top:18px;color:var(--muted);font-size:13px}
 
 /* Thumbnails inside the owl buttons */

@@ -27,7 +27,7 @@ const progressEl = document.getElementById('progress');
 const skipMsg = document.getElementById('skipMsg');
 const doneSection = document.getElementById('done');
 const rankingEl = document.getElementById('ranking');
-const restartBtn = document.getElementById('restart');
+// const restartBtn = document.getElementById('restart');
 
 // Build pairs (unique unordered)
 let pairs = [];
@@ -36,7 +36,6 @@ for (let i = 0; i < owls.length; i++) {
     pairs.push([i, j]);
   }
 }
-
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -45,24 +44,25 @@ function shuffle(a) {
 }
 shuffle(pairs);
 
-// Simple rating system (increment/decrement) to approximate strength
+// Rating system 1: simple +1/-1 per win/loss
 let ratings = new Array(owls.length).fill(0);
+// Rating system 2: use Bradley-Terry model on winner and loser pairs
 let winners = []; // pairs of [winnerIndex, loserIndex]
 let idx = 0;
 
 const testBtn = document.getElementById('testBtn');
-const computeStatsBtn = document.getElementById('computeStats');
+const computeStatsRankingBtn = document.getElementById('computeStatsRanking');
+const computeStatsBTBtn = document.getElementById('computeStatsBT');
 const statMsg = document.getElementById('statMsg');
 const resetProgressBtn = document.getElementById('resetProgress');
 
-// Persist/load state
+// Persist/load the user's ratings and the owls' scores
 function saveState() {
   localStorage.setItem('owl_pairs', JSON.stringify(pairs));
   localStorage.setItem('owl_ratings', JSON.stringify(ratings));
   localStorage.setItem('owl_winners', JSON.stringify(winners));
   localStorage.setItem('owl_index', String(idx));
 }
-
 function loadState() {
   try {
     const p = JSON.parse(localStorage.getItem('owl_pairs') || 'null');
@@ -77,14 +77,12 @@ function loadState() {
     console.warn('Failed to load state', e);
   }
 }
-
 loadState();
 
 // helpers for image file name and loading
 function sanitizedName(name) {
   return name.replace(/[\s-]+/g, '_').toLowerCase();
 }
-
 function trySetImage(imgEl, base, exts, idxExt = 0) {
   if (idxExt >= exts.length) {
     if (imgEl && imgEl.parentNode) imgEl.remove();
@@ -96,12 +94,31 @@ function trySetImage(imgEl, base, exts, idxExt = 0) {
   imgEl.onerror = () => trySetImage(imgEl, base, exts, idxExt + 1);
 }
 
+// Format BT scores using a small number of significant figures via toPrecision
+function formatSignificant(x) {
+  if (x == null || Number.isNaN(x)) return String(x);
+  const absx = Math.abs(x);
+  if (absx === 0) return '0';
+  // choose sig figs: 1 for very small numbers, 2 otherwise
+  const sig = absx < 0.01 ? 1 : 2;
+  // use toPrecision and remove unnecessary plus in exponential form
+  let s = Number(x).toPrecision(sig);
+  // convert exponential like 1e-6 to decimal if possible and short
+  // but keep JS default for extremely small numbers
+  // try to parse and format to plain string if not exponential
+  if (!s.includes('e')) return s;
+  // for exponential, convert to Number and toString with enough decimals
+  const n = Number(s);
+  return n.toString();
+}
+
+// How many pairs has the user completed
 function updateProgress() {
   progressEl.textContent = `Progress: ${Math.min(idx, pairs.length)} / ${pairs.length}`;
 }
 
-function showResults() {
-  document.getElementById('pair').hidden = true;
+// Run when all pairs are done OR user selects intermediate results
+function showWinSumResults() {
   doneSection.hidden = false;
   // create ranking by rating
   const ranked = owls.map((name, i) => ({ name, rating: ratings[i] }));
@@ -115,8 +132,12 @@ function showResults() {
     img.alt = item.name;
     trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
     li.appendChild(img);
-    const text = document.createTextNode(`${item.name} (${item.rating})`);
-    li.appendChild(text);
+    //const text = document.createTextNode(`${item.name} (${item.rating})`);
+    //li.appendChild(text);
+    const nameStrong = document.createElement('strong');
+    nameStrong.textContent = item.name;
+    li.appendChild(nameStrong);
+    li.appendChild(document.createTextNode(` (${item.rating})`));
     rankingEl.appendChild(li);
   }
 }
@@ -170,10 +191,10 @@ function computeBradleyTerry(winnersArr, n, opts = {}) {
   return s;
 }
 
-function showStatResults(scores) {
-  document.getElementById('pair').hidden = true;
+function showBTResults(scores) {
   doneSection.hidden = false;
   const ranked = owls.map((name, i) => ({ name, rating: ratings[i], score: scores ? scores[i] : null }));
+  // Sort by Bradley-Terry score if available, else by simple rating
   ranked.sort((a, b) => (scores ? b.score - a.score : b.rating - a.rating) || a.name.localeCompare(b.name));
   rankingEl.innerHTML = '';
   for (const item of ranked) {
@@ -184,65 +205,100 @@ function showStatResults(scores) {
     trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
     li.appendChild(img);
     if (item.score != null) {
-      //li.appendChild(document.createTextNode(`${item.name} — BT score: ${item.score.toFixed(3)} (simple: ${item.rating})`));
-      li.appendChild(document.createTextNode(`${item.name}`));
+      // Formatted Bradley-Terry score
+      const formatted = formatSignificant(item.score);
+      const nameStrong = document.createElement('strong');
+      nameStrong.textContent = item.name;
+      li.appendChild(nameStrong);
+      li.appendChild(document.createTextNode(` (${formatted})`));
     } else {
-      //li.appendChild(document.createTextNode(`${item.name} (${item.rating})`));
       li.appendChild(document.createTextNode(`${item.name}`));
     }
     rankingEl.appendChild(li);
   }
 }
 
-computeStatsBtn && computeStatsBtn.addEventListener('click', () => {
-  const scores = computeBradleyTerry(winners, owls.length);
-  statMsg.textContent = 'Computed Bradley–Terry scores.';
-  showStatResults(scores);
+// Show ranking by win-sum (simple rating)
+computeStatsRankingBtn && computeStatsRankingBtn.addEventListener('click', () => {
+  statMsg.textContent = 'Showing rankings based on matchups so far';
+  rankingHeader.textContent = 'Rankings (Win Sum)';
+  showWinSumResults();
 });
 
-// Test button: generate a random set of pairwise results so the BT implementation can be tested quickly
+// Show ranking by Bradley-Terry score
+computeStatsBTBtn && computeStatsBTBtn.addEventListener('click', () => {
+  const scores = computeBradleyTerry(winners, owls.length);
+  statMsg.textContent = 'Showing rankings based on matchups so far';
+  rankingHeader.textContent = 'Rankings (Bradley–Terry Score)';
+  showBTResults(scores);
+});
+
+// Test button: generate exactly one simulated result per unique pair (171 matches for 19 owls)
 testBtn && testBtn.addEventListener('click', () => {
-  // generate 1-5 matches per pair with random winners
+  // simulate an underlying true-skill for each owl to bias results slightly
+  const trueSkill = Array.from({ length: owls.length }, () => (Math.random() - 0.5) * 2);
   const sim = [];
   for (let i = 0; i < owls.length; i++) {
     for (let j = i + 1; j < owls.length; j++) {
-      const matches = 1 + Math.floor(Math.random() * 5);
-      for (let m = 0; m < matches; m++) {
-        // introduce mild true-skill signal so ranking is not pure noise
-        const p = 0.5 + (Math.random() - 0.5) * 0.2; // small random bias
-        if (Math.random() < p) sim.push([i, j]); else sim.push([j, i]);
-      }
+      // logistic probability based on skill difference
+      const diff = trueSkill[i] - trueSkill[j];
+      const p = 1 / (1 + Math.exp(-diff));
+      if (Math.random() < p) sim.push([i, j]); else sim.push([j, i]);
     }
   }
-  // replace winners with simulated data for testing (do not persist)
+  // use simulated matches for testing (do not persist to localStorage)
   winners = sim;
-  statMsg.textContent = `Generated ${winners.length} simulated matches.`;
+  statMsg.textContent = `Generated ${winners.length} simulated pairwise matches.`;
   const scores = computeBradleyTerry(winners, owls.length);
-  showStatResults(scores);
+  showBTResults(scores);
 });
 
+function deactivateButtons() {
+  btn1.disabled = true;
+  btn2.disabled = true;
+  btn1.style.display = 'none';
+  btn2.style.display = 'none';
+}
+1
+function activateButtons() {
+  btn1.disabled = false;
+  btn2.disabled = false;
+  btn1.style.display = 'inline-block';
+  btn2.style.display = 'inline-block';
+}
+
+// Show two owls to the user
 function showPair() {
-  updateProgress();
-  skipMsg.textContent = '';
+  updateProgress(); // Update # of completed pairs
+  skipMsg.textContent = ''; 
+  activateButtons();
+
+  // Stop if done
   if (idx >= pairs.length) {
     saveState();
-    showResults();
+    showWinSumResults();
     return;
   }
 
   const [a, b] = pairs[idx];
-  // skip if ratings very different (heuristic similar to original)
+
+  // Skip if ratings very different
   if (Math.abs(ratings[a] - ratings[b]) > 5) {
     const winner = ratings[a] > ratings[b] ? a : b;
     const loser = winner === a ? b : a;
-    // register the skip as a vote for the winner (update simple ratings and record the match)
+    // Register the skip as a vote for the winner (update simple ratings and record the match)
     ratings[winner] += 1;
     ratings[loser] -= 1;
     winners.push([winner, loser]);
-    skipMsg.textContent = `Skipping ${owls[a]} vs. ${owls[b]} — winner: ${owls[winner]}`;
+    skipMsg.textContent = `Skipping ${owls[a]} vs. ${owls[b]} (estimated winner: ${owls[winner]})`;
     idx++;
     saveState();
-    setTimeout(showPair, 700);
+
+    // Hide the buttons temporarily
+    deactivateButtons();
+
+    // Show next pair after a short delay
+    setTimeout(showPair, 1500);
     return;
   }
 
@@ -270,6 +326,8 @@ function showPair() {
 }
 
 function handleChoice(choice) {
+  clearStatMsg();
+  doneSection.hidden = true;
   if (idx >= pairs.length) return;
   const [a, b] = pairs[idx];
   const winner = choice === 1 ? a : b;
@@ -291,16 +349,16 @@ document.addEventListener('keydown', (e) => {
   if (e.key === '2') btn2.click();
 });
 
-restartBtn.addEventListener('click', () => {
-  localStorage.removeItem('owl_pairs');
-  localStorage.removeItem('owl_ratings');
-  localStorage.removeItem('owl_winners');
-  localStorage.removeItem('owl_index');
-  location.reload();
-});
+// restartBtn.addEventListener('click', () => {
+//   localStorage.removeItem('owl_pairs');
+//   localStorage.removeItem('owl_ratings');
+//   localStorage.removeItem('owl_winners');
+//   localStorage.removeItem('owl_index');
+//   location.reload();
+// });
 
 resetProgressBtn && resetProgressBtn.addEventListener('click', () => {
-  if (!confirm('Reset progress? This will clear stored ratings and recorded matches. Continue?')) return;
+  if (!confirm('Reset progress? This will leave your ratings a blank slate...')) return;
   // clear storage
   localStorage.removeItem('owl_ratings');
   localStorage.removeItem('owl_winners');
@@ -321,6 +379,10 @@ resetProgressBtn && resetProgressBtn.addEventListener('click', () => {
   statMsg.textContent = 'Progress reset.';
   showPair();
 });
+
+function clearStatMsg() {
+  statMsg.textContent = '';
+}
 
 // initial render
 showPair();
