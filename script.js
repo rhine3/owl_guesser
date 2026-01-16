@@ -344,7 +344,6 @@ btn1.addEventListener('click', () => handleChoice(1));
 btn2.addEventListener('click', () => handleChoice(2));
 
 document.addEventListener('keydown', (e) => {
-  if (doneSection.hidden === false) return;
   if (e.key === '1') btn1.click();
   if (e.key === '2') btn2.click();
 });
@@ -358,7 +357,7 @@ document.addEventListener('keydown', (e) => {
 // });
 
 resetProgressBtn && resetProgressBtn.addEventListener('click', () => {
-  if (!confirm('Reset progress? This will leave your ratings a blank slate...')) return;
+  if (!confirm('Reset progress? This will delete the results of all matchups you have judged.')) return;
   // clear storage
   localStorage.removeItem('owl_ratings');
   localStorage.removeItem('owl_winners');
