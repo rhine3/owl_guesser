@@ -82,7 +82,7 @@ loadState();
 
 // helpers for image file name and loading
 function sanitizedName(name) {
-  return name.replace(/[\s-]+/g, '_');
+  return name.replace(/[\s-]+/g, '_').toLowerCase();
 }
 
 function trySetImage(imgEl, base, exts, idxExt = 0) {
@@ -246,22 +246,7 @@ function showPair() {
     return;
   }
 
-  // helper to sanitize filenames: spaces and hyphens -> underscores
-  function sanitizedName(name) {
-    return name.replace(/[\s-]+/g, '_');
-  }
-
-  // try common extensions until one loads; if none load, remove the image element
-  function trySetImage(imgEl, base, exts, idxExt = 0) {
-    if (idxExt >= exts.length) {
-      if (imgEl && imgEl.parentNode) imgEl.remove();
-      return;
-    }
-    const ext = exts[idxExt];
-    imgEl.src = `photos/${base}${ext}`;
-    imgEl.onload = () => {};
-    imgEl.onerror = () => trySetImage(imgEl, base, exts, idxExt + 1);
-  }
+  // try common extensions until one loads; uses global helpers
 
   // populate button with optional image and label
   function populateButton(btn, name, prefix) {
