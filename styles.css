@@ -16,6 +16,44 @@ h2#rankingHeader{margin-top:20px;margin-bottom:0px;font-size:25px}
 #progress{font-size:14px;color:var(--muted)}
 .muted{color:var(--muted);margin-top:10px;margin-bottom:10px}
 #done{margin-top:12px}
+
+.ranking-item {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.thumb-wrapper {
+  float: left;
+  position: relative;
+  margin-right: 8px;
+}
+
+.ranking-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.rank-badge {
+  position: absolute;
+  left: 2px;
+  bottom: 2px;
+
+  background: white;
+  color: black;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+/* li{position:relative;overflow:hidden} */
+
+/* li{margin-bottom:8px;line-height:1.4;float:left} */
 /* button#restart{margin-top:12px;padding:8px 12px;border-radius:6px;background:var(--accent);color:#fff;border:none;cursor:pointer} */
 /* footer{margin-top:1px;margin-bottom:4px;color:var(--muted);font-size:13px} */
 
@@ -29,7 +67,7 @@ h2#rankingHeader{margin-top:20px;margin-bottom:0px;font-size:25px}
   margin-bottom:8px;
   border:1px solid #eee;
 }
-.ranking-thumb{width:48px;height:48px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle}
+.ranking-thumb{width:48px;height:48px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;float:left}
 
 /* two-column rankings layout */
 #rankings-grid{display:flex;gap:18px}

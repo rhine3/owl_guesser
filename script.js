@@ -103,13 +103,15 @@ function formatSignificant(x) {
   const sig = absx < 0.01 ? 1 : 2;
   // use toPrecision and remove unnecessary plus in exponential form
   let s = Number(x).toPrecision(sig);
+  if (s < 0.001) return "~0";
+  return s;
   // convert exponential like 1e-6 to decimal if possible and short
   // but keep JS default for extremely small numbers
   // try to parse and format to plain string if not exponential
-  if (!s.includes('e')) return s;
+  //if (!s.includes('e')) return s;
   // for exponential, convert to Number and toString with enough decimals
-  const n = Number(s);
-  return n.toString();
+  //const n = Number(s);
+  //return n.toString();
 }
 
 // How many pairs has the user completed
@@ -169,6 +171,43 @@ function computeBradleyTerry(winnersArr, n, opts = {}) {
 }
 
 
+function renderSimpleRankings(rankedWins, winsList) {
+  rankedWins.forEach((item, index) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ranking-item';
+
+    // Create a single wrapper for ranking and thumbnail
+    const imgWrapper = document.createElement('div');
+    imgWrapper.className = 'thumb-wrapper';
+
+    // Numerical ranking
+    const badge = document.createElement('span');
+    badge.className = 'rank-badge';
+    badge.textContent = index + 1;
+    imgWrapper.appendChild(badge);
+
+    // Owl thumbnail
+    const img = document.createElement('img');
+    img.className = 'ranking-thumb';
+    img.alt = item.name;
+    trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png']);
+    imgWrapper.appendChild(img);
+    
+
+    // Add wrapper to page
+    wrapper.appendChild(imgWrapper);
+
+    // Name and rating
+    wrapper.appendChild(
+      document.createTextNode(`${item.name} (${item.rating})`)
+    );
+
+    winsList.appendChild(wrapper);
+  });
+
+}
+
+
 // Render both rankings side-by-side
 function showAllResults() {
   doneSection.hidden = false;
@@ -182,40 +221,43 @@ function showAllResults() {
 
   const rankedWins = owls.map((name, i) => ({ name, rating: ratings[i] }));
   rankedWins.sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
-  for (const item of rankedWins) {
-    const li = document.createElement('li');
-    const img = document.createElement('img');
-    img.className = 'ranking-thumb';
-    img.alt = item.name;
-    trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
-    li.appendChild(img);
-    const nameStrong = document.createElement('strong');
-    nameStrong.textContent = item.name;
-    li.appendChild(nameStrong);
-    li.appendChild(document.createTextNode(` (${item.rating})`));
-    winsList.appendChild(li);
-  }
+  renderSimpleRankings(rankedWins, winsList);
+  // for (const item of rankedWins) {
+  //   // Using list items to display each owl with image and rating
+  //   const li = document.createElement('li');
+  //   const img = document.createElement('img');
+  //   img.className = 'ranking-thumb';
+  //   img.alt = item.name;
+  //   trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
+  //   li.appendChild(img);
+  //   // const nameStrong = document.createElement('strong');
+  //   // nameStrong.textContent = item.name;
+  //   // li.appendChild(nameStrong);
+  //   li.appendChild(document.createTextNode(`${item.name} (${item.rating})`));
+  //   winsList.appendChild(li);
+  // }
 
   // compute BT scores and render
   const scores = computeBradleyTerry(winners, owls.length);
   const rankedBT = owls.map((name, i) => ({ name, rating: ratings[i], score: scores ? scores[i] : null }));
   rankedBT.sort((a, b) => (scores ? b.score - a.score : b.rating - a.rating) || a.name.localeCompare(b.name));
-  for (const item of rankedBT) {
-    const li = document.createElement('li');
-    const img = document.createElement('img');
-    img.className = 'ranking-thumb';
-    img.alt = item.name;
-    trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
-    li.appendChild(img);
-    const nameStrong = document.createElement('strong');
-    nameStrong.textContent = item.name;
-    li.appendChild(nameStrong);
-    if (item.score != null) {
-      const formatted = formatSignificant(item.score);
-      li.appendChild(document.createTextNode(` (${formatted})`));
-    }
-    btList.appendChild(li);
-  }
+  renderSimpleRankings(rankedBT, btList);
+  // for (const item of rankedBT) {
+  //   const li = document.createElement('li');
+  //   const img = document.createElement('img');
+  //   img.className = 'ranking-thumb';
+  //   img.alt = item.name;
+  //   trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
+  //   li.appendChild(img);
+  //   // const nameStrong = document.createElement('strong');
+  //   // nameStrong.textContent = item.name;
+  //   // li.appendChild(nameStrong);
+  //   if (item.score != null) {
+  //     const formatted = formatSignificant(item.score);
+  //     li.appendChild(document.createTextNode(`${item.name} (${formatted})`));
+  //   }
+  //   btList.appendChild(li);
+  // }
 }
 
 // Test button: generate exactly one simulated result per unique pair (171 matches for 19 owls)
@@ -288,7 +330,7 @@ function showPair() {
 
   // try common extensions until one loads; uses global helpers
 
-  // populate button with optional image and label
+  // populate button with image and label
   function populateButton(btn, name, prefix) {
     btn.disabled = true; // temporarily disable while updating
     btn.innerHTML = '';
