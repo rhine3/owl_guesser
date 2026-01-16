@@ -1,12 +1,19 @@
 # Pairwise North American owl quiz
 
-This app is a static javascript application which helps users rank owls using pairwise comparisons.
+This website enables users to rank owls using pairwise comparisons.
+
+### LLM Disclaimer
+
+I used GPT-5 mini to help build this website.
 
 ### About the app
 
 This app is based on an original, text input-based Python app (more info below). It features several enhancements over the original app:
+- There are images and a user interface!
 - It is a static javascript app that can be deployed via GitHub pages, and requires no Python to run.
-- It allows the user to pick a name of either owl in each pair by clicking on the owl's button or by pressing 1 or 2.
+- The user select the winner for each matchup by either clicking the winner's button or entering 1 or 2 on their keyboard.
+-  It offers options to rank owls both by the sum of their win/loss records and by their Bradley-Terry score.
+
 
 
 ### Original text-based Python implementation
