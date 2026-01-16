@@ -26,7 +26,8 @@ const btn2 = document.getElementById('btn2');
 const progressEl = document.getElementById('progress');
 const skipMsg = document.getElementById('skipMsg');
 const doneSection = document.getElementById('done');
-const rankingEl = document.getElementById('ranking');
+const rankingHeader = document.getElementById('rankingHeader');
+// ranking lists are created dynamically in the DOM when showing results
 // const restartBtn = document.getElementById('restart');
 
 // Build pairs (unique unordered)
@@ -51,8 +52,7 @@ let winners = []; // pairs of [winnerIndex, loserIndex]
 let idx = 0;
 
 const testBtn = document.getElementById('testBtn');
-const computeStatsRankingBtn = document.getElementById('computeStatsRanking');
-const computeStatsBTBtn = document.getElementById('computeStatsBT');
+const currentRankingsBtn = document.getElementById('currentRankings');
 const statMsg = document.getElementById('statMsg');
 const resetProgressBtn = document.getElementById('resetProgress');
 
@@ -118,29 +118,6 @@ function updateProgress() {
 }
 
 // Run when all pairs are done OR user selects intermediate results
-function showWinSumResults() {
-  doneSection.hidden = false;
-  // create ranking by rating
-  const ranked = owls.map((name, i) => ({ name, rating: ratings[i] }));
-  ranked.sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
-  rankingEl.innerHTML = '';
-  for (const item of ranked) {
-    const li = document.createElement('li');
-    // try to show thumbnail
-    const img = document.createElement('img');
-    img.className = 'ranking-thumb';
-    img.alt = item.name;
-    trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
-    li.appendChild(img);
-    //const text = document.createTextNode(`${item.name} (${item.rating})`);
-    //li.appendChild(text);
-    const nameStrong = document.createElement('strong');
-    nameStrong.textContent = item.name;
-    li.appendChild(nameStrong);
-    li.appendChild(document.createTextNode(` (${item.rating})`));
-    rankingEl.appendChild(li);
-  }
-}
 
 // Build pair counts and win counts from `winners` array
 function buildCounts(winnersArr, n) {
@@ -191,48 +168,55 @@ function computeBradleyTerry(winnersArr, n, opts = {}) {
   return s;
 }
 
-function showBTResults(scores) {
+
+// Render both rankings side-by-side
+function showAllResults() {
   doneSection.hidden = false;
-  const ranked = owls.map((name, i) => ({ name, rating: ratings[i], score: scores ? scores[i] : null }));
-  // Sort by Bradley-Terry score if model converged, else by simple rating
-  ranked.sort((a, b) => (scores ? b.score - a.score : b.rating - a.rating) || a.name.localeCompare(b.name));
-  rankingEl.innerHTML = '';
-  for (const item of ranked) {
+  // set header
+  rankingHeader.textContent = 'Rankings';
+  // prepare win-sum ranking
+  const winsList = document.getElementById('ranking-wins');
+  const btList = document.getElementById('ranking-bt');
+  winsList.innerHTML = '';
+  btList.innerHTML = '';
+
+  const rankedWins = owls.map((name, i) => ({ name, rating: ratings[i] }));
+  rankedWins.sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name));
+  for (const item of rankedWins) {
     const li = document.createElement('li');
     const img = document.createElement('img');
     img.className = 'ranking-thumb';
     img.alt = item.name;
-    // Images are currently jpgs but keep these around just in case
     trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
     li.appendChild(img);
+    const nameStrong = document.createElement('strong');
+    nameStrong.textContent = item.name;
+    li.appendChild(nameStrong);
+    li.appendChild(document.createTextNode(` (${item.rating})`));
+    winsList.appendChild(li);
+  }
+
+  // compute BT scores and render
+  const scores = computeBradleyTerry(winners, owls.length);
+  const rankedBT = owls.map((name, i) => ({ name, rating: ratings[i], score: scores ? scores[i] : null }));
+  rankedBT.sort((a, b) => (scores ? b.score - a.score : b.rating - a.rating) || a.name.localeCompare(b.name));
+  for (const item of rankedBT) {
+    const li = document.createElement('li');
+    const img = document.createElement('img');
+    img.className = 'ranking-thumb';
+    img.alt = item.name;
+    trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
+    li.appendChild(img);
+    const nameStrong = document.createElement('strong');
+    nameStrong.textContent = item.name;
+    li.appendChild(nameStrong);
     if (item.score != null) {
-      // Formatted Bradley-Terry score
       const formatted = formatSignificant(item.score);
-      const nameStrong = document.createElement('strong');
-      nameStrong.textContent = item.name;
-      li.appendChild(nameStrong);
       li.appendChild(document.createTextNode(` (${formatted})`));
-    } else {
-      li.appendChild(document.createTextNode(`${item.name}`));
     }
-    rankingEl.appendChild(li);
+    btList.appendChild(li);
   }
 }
-
-// Show ranking by win-sum (simple rating)
-computeStatsRankingBtn && computeStatsRankingBtn.addEventListener('click', () => {
-  statMsg.textContent = 'Showing rankings based on matchups so far';
-  rankingHeader.textContent = 'Rankings (Win Sum)';
-  showWinSumResults();
-});
-
-// Show ranking by Bradley-Terry score
-computeStatsBTBtn && computeStatsBTBtn.addEventListener('click', () => {
-  const scores = computeBradleyTerry(winners, owls.length);
-  statMsg.textContent = 'Showing rankings based on matchups so far';
-  rankingHeader.textContent = 'Rankings (Bradley–Terry model)';
-  showBTResults(scores);
-});
 
 // Test button: generate exactly one simulated result per unique pair (171 matches for 19 owls)
 testBtn && testBtn.addEventListener('click', () => {
@@ -251,7 +235,7 @@ testBtn && testBtn.addEventListener('click', () => {
   winners = sim;
   statMsg.textContent = `Generated ${winners.length} simulated pairwise matches.`;
   const scores = computeBradleyTerry(winners, owls.length);
-  showBTResults(scores);
+  showAllResults();
 });
 
 function deactivateButtons() {
@@ -260,7 +244,6 @@ function deactivateButtons() {
   btn1.style.display = 'none';
   btn2.style.display = 'none';
 }
-1
 function activateButtons() {
   btn1.disabled = false;
   btn2.disabled = false;
@@ -277,7 +260,7 @@ function showPair() {
   // Stop if done
   if (idx >= pairs.length) {
     saveState();
-    showWinSumResults();
+    showAllResults();
     return;
   }
 
@@ -374,10 +357,19 @@ resetProgressBtn && resetProgressBtn.addEventListener('click', () => {
   // reset UI
   doneSection.hidden = true;
   document.getElementById('pair').hidden = false;
-  rankingEl.innerHTML = '';
+  const winsList = document.getElementById('ranking-wins');
+  const btList = document.getElementById('ranking-bt');
+  if (winsList) winsList.innerHTML = '';
+  if (btList) btList.innerHTML = '';
   skipMsg.textContent = '';
   statMsg.textContent = 'Progress reset.';
   showPair();
+});
+
+// Current rankings button shows both columns
+currentRankingsBtn && currentRankingsBtn.addEventListener('click', () => {
+  statMsg.textContent = `Computed from ${winners.length} completed matchups so far.`;
+  showAllResults();
 });
 
 function clearStatMsg() {

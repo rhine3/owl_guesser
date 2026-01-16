@@ -9,7 +9,7 @@
   <body>
     <main>
       <h1>North American Owl Ranker</h1>
-      <p class="muted"><i>Because you're the only one who is qualified to decide.</i></p>
+      <p class="muted"><i>Because you're the only one who can decide.</i></p>
       <section id="controls">
         <p>For each matchup, click your winner or press <strong>1</strong> or <strong>2</strong>.</p>
         <div id="progress">Progress: 0 / 0</div>
@@ -24,8 +24,7 @@
       <section>
 
         <div style="margin-top:10px;display:flex;gap:8px;">
-          <button id="computeStatsRanking">Compute rankings (by wins)</button>
-          <button id="computeStatsBT">Compute rankings (modeled)</button>
+          <button id="currentRankings">Current rankings</button>
           <button id="resetProgress">Reset progress</button>
           <!-- <button id="testBtn">Test (generate random results)</button> -->
         </div>
@@ -35,8 +34,16 @@
 
       <section id="done" hidden>
         <h2 id="rankingHeader">Rankings</h2>
-        <ol id="ranking"></ol>
-        <!-- <button id="restart">Restart Quiz</button> -->
+        <div id="rankings-grid">
+          <div class="rank-col">
+            <h3>Sum of wins & losses</h3>
+            <ol id="ranking-wins"></ol>
+          </div>
+          <div class="rank-col">
+            <h3>Bradley–Terry score</h3>
+            <ol id="ranking-bt"></ol>
+          </div>
+        </div>
       </section>
 
       <footer>
