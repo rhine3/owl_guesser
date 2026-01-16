@@ -194,7 +194,7 @@ function computeBradleyTerry(winnersArr, n, opts = {}) {
 function showBTResults(scores) {
   doneSection.hidden = false;
   const ranked = owls.map((name, i) => ({ name, rating: ratings[i], score: scores ? scores[i] : null }));
-  // Sort by Bradley-Terry score if available, else by simple rating
+  // Sort by Bradley-Terry score if model converged, else by simple rating
   ranked.sort((a, b) => (scores ? b.score - a.score : b.rating - a.rating) || a.name.localeCompare(b.name));
   rankingEl.innerHTML = '';
   for (const item of ranked) {
@@ -202,6 +202,7 @@ function showBTResults(scores) {
     const img = document.createElement('img');
     img.className = 'ranking-thumb';
     img.alt = item.name;
+    // Images are currently jpgs but keep these around just in case
     trySetImage(img, sanitizedName(item.name), ['.jpg', '.jpeg', '.png', '.webp']);
     li.appendChild(img);
     if (item.score != null) {
@@ -283,7 +284,7 @@ function showPair() {
   const [a, b] = pairs[idx];
 
   // Skip if ratings very different
-  if (Math.abs(ratings[a] - ratings[b]) > 5) {
+  if (Math.abs(ratings[a] - ratings[b]) > 6) {
     const winner = ratings[a] > ratings[b] ? a : b;
     const loser = winner === a ? b : a;
     // Register the skip as a vote for the winner (update simple ratings and record the match)
@@ -298,7 +299,7 @@ function showPair() {
     deactivateButtons();
 
     // Show next pair after a short delay
-    setTimeout(showPair, 1500);
+    setTimeout(showPair, 1700);
     return;
   }
 
