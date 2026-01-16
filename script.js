@@ -229,7 +229,7 @@ computeStatsRankingBtn && computeStatsRankingBtn.addEventListener('click', () =>
 computeStatsBTBtn && computeStatsBTBtn.addEventListener('click', () => {
   const scores = computeBradleyTerry(winners, owls.length);
   statMsg.textContent = 'Showing rankings based on matchups so far';
-  rankingHeader.textContent = 'Rankings (Bradley–Terry Score)';
+  rankingHeader.textContent = 'Rankings (Bradley–Terry model)';
   showBTResults(scores);
 });
 
